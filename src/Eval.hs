@@ -25,6 +25,14 @@ steps :: (Ast, Env, [Ctx]) -> IO ()
 steps (SSkip, _, []) = return ()
 steps st = step st >>= steps
 
+stepsMT`:: Thread -> IO ()
+stepsMT (Thread st ch) = do
+  st' <- step st
+  ch' <- runChildren ch
+  return $ Thread st' ch'
+    runChildren [] = []
+    runChildren (x:xs) = stepsMT x >> runChildren xs
+
 step :: (Ast, Env, [Ctx]) -> IO (Ast, Env, [Ctx])
 -- step (ast, e, c) | trace ((show ast) ++ "\n--\n" ++ show c ++ "\n") False = undefined
 
@@ -79,7 +87,14 @@ step ((EVal v), env, CtxThrow : ctx) = return (cs, (addVar s v env), ctx')
     unwind (_ : ctx) = unwind ctx
 
 -- Spawn
-step (ESpawn
+step (ESpawn e, env, ctx) = return (e, env, CtxSpawn : ctx)
+step (e@(EVal _), env, CtxSpawn : ctx) = return (e, env, ctx)
+
+-- Detach
+step (EDetach e, env, ctx) = return 
+
+-- Join
+step (EJoin e, env, ctx) = return ()
 
 -- Variable reference: get from environment
 step (EVar s, env, ctx) = return (EVal $ findVar s env, env, ctx)

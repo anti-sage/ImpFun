@@ -76,5 +76,10 @@ data Ctx =
   | CtxCall Env
   
   | CtxRef
-  | CtxDeref  
+  | CtxDeref
+  
+  | CtxSpawn
   deriving (Show)
+
+data Thread =
+    Thread (Ast, Env, [Ctx]) [Thread]
